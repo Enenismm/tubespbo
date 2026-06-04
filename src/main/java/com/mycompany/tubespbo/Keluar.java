@@ -233,7 +233,7 @@ public static Connection configDB() {
         long diffJam = diffMs / (1000 * 60 * 60);
         if (diffJam < 1) diffJam = 1;
 
-        double tarif = jenis.equals("Motor") ? 2000 : 4000;
+        double tarif = jenis.equalsIgnoreCase("Motor") ? 2000 : 4000;
         double totalBiaya = diffJam * tarif;
 
         jTextField5.setText(waktuKeluar.toString());
@@ -256,7 +256,6 @@ public static Connection configDB() {
 
         JOptionPane.showMessageDialog(this, "Kendaraan keluar!\nTotal Biaya: Rp " + totalBiaya);
         loadPlatNomor();
-        kosong();
     }
 } catch (SQLException e) {
     JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());

@@ -35,6 +35,10 @@ public static Connection configDB() {
     public Laporan() {
     initComponents();
     loadTable();
+    
+    javax.swing.Timer timer = new javax.swing.Timer(30000, e -> loadTable());
+    timer.start();
+    
     }
 
     /**
@@ -133,9 +137,79 @@ public static Connection configDB() {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-        JOptionPane.showMessageDialog(this, "Fitur Edit belum tersedia!");
-    
+         int baris = jTable1.getSelectedRow();
+    if (baris == -1) {
+        JOptionPane.showMessageDialog(this, "Pilih data dulu!");
+        return;
+    }
+
+    String idTiket = jTable1.getValueAt(baris, 0).toString();
+    String platNomor = jTable1.getValueAt(baris, 1).toString();
+    String jenis = jTable1.getValueAt(baris, 2).toString();
+
+    javax.swing.JTextField tfPlat = new javax.swing.JTextField(platNomor);
+    javax.swing.JComboBox<String> cbJenis = new javax.swing.JComboBox<>(new String[]{"motor", "mobil"});
+    cbJenis.setSelectedItem(jenis);
+
+    Object[] fields = {
+        "Plat Nomor:", tfPlat,
+        "Jenis:", cbJenis
+    };
+
+    int result = JOptionPane.showConfirmDialog(this, fields,
+        "Edit Tiket: " + idTiket, JOptionPane.OK_CANCEL_OPTION);
+
+    if (result == JOptionPane.OK_OPTION) {
+        try {
+            String platBaru = tfPlat.getText().trim();
+            String jenisBaru = cbJenis.getSelectedItem().toString();
+            int jumlahRoda = jenisBaru.equalsIgnoreCase("motor") ? 2 : 4;
+
+            if (platBaru.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Plat nomor tidak boleh kosong!");
+                return;
+            }
+
+            Connection conn = configDB();
+
+            String sqlKendaraan = "UPDATE kendaraan SET jenis = ?, jumlahRoda = ? WHERE platNomor = ?";
+            PreparedStatement pstKendaraan = conn.prepareStatement(sqlKendaraan);
+            pstKendaraan.setString(1, jenisBaru);
+            pstKendaraan.setInt(2, jumlahRoda);
+            pstKendaraan.setString(3, platNomor);
+            pstKendaraan.execute();
+
+           if (!platBaru.equals(platNomor)) {
+                 String cekSql = "SELECT * FROM kendaraan WHERE platNomor = ?";
+                PreparedStatement cekPst = conn.prepareStatement(cekSql);
+                cekPst.setString(1, platBaru);
+                ResultSet cekRs = cekPst.executeQuery();
+
+    if (!cekRs.next()) {
+        // Plat belum ada, insert otomatis
+        String sqlInsert = "INSERT INTO kendaraan (platNomor, merk, jumlahRoda, jenis) VALUES (?, ?, ?, ?)";
+        PreparedStatement pstInsert = conn.prepareStatement(sqlInsert);
+        pstInsert.setString(1, platBaru);
+        pstInsert.setString(2, "");
+        pstInsert.setInt(3, jumlahRoda);
+        pstInsert.setString(4, jenisBaru);
+        pstInsert.execute();
+    }
+
+    String sqlTiket = "UPDATE tiket SET kendaraan = ? WHERE idTiket = ?";
+    PreparedStatement pstTiket = conn.prepareStatement(sqlTiket);
+    pstTiket.setString(1, platBaru);
+    pstTiket.setString(2, idTiket);
+    pstTiket.execute();
+}
+
+            JOptionPane.showMessageDialog(this, "Data berhasil diupdate!");
+            loadTable();
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+        }
+    }//GEN-LAST:event_jButton4ActionPerformed
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -221,20 +295,27 @@ public static Connection configDB() {
 
         Connection conn = configDB();
         String sql = "SELECT t.idTiket, t.kendaraan, k.jenis, t.waktuMasuk, t.waktuKeluar, "
-                   + "TIMESTAMPDIFF(HOUR, t.waktuMasuk, IFNULL(t.waktuKeluar, NOW())) as durasi, "
-                   + "t.totalBiaya FROM tiket t JOIN kendaraan k ON t.kendaraan = k.platNomor";
+                   + "GREATEST(1, TIMESTAMPDIFF(HOUR, t.waktuMasuk, IFNULL(t.waktuKeluar, NOW()))) as durasi, "
+                   + "t.totalBiaya, "
+                   + "CASE WHEN t.waktuKeluar IS NULL THEN "
+                   + "  GREATEST(1, TIMESTAMPDIFF(HOUR, t.waktuMasuk, NOW())) * IF(k.jenis='Motor', 2000, 4000) "
+                   + "ELSE t.totalBiaya END as biayaHitung "
+                   + "FROM tiket t JOIN kendaraan k ON t.kendaraan = k.platNomor";
         java.sql.Statement stm = conn.createStatement();
         ResultSet rs = stm.executeQuery(sql);
 
         while (rs.next()) {
+            String waktuKeluar = rs.getString("waktuKeluar");
+            String statusKeluar = (waktuKeluar != null) ? waktuKeluar : "(masih parkir)";
+
             model.addRow(new Object[]{
                 rs.getString("idTiket"),
                 rs.getString("kendaraan"),
                 rs.getString("jenis"),
                 rs.getString("waktuMasuk"),
-                rs.getString("waktuKeluar"),
+                statusKeluar,
                 rs.getString("durasi") + " jam",
-                "Rp " + rs.getString("totalBiaya")
+                "Rp " + rs.getString("biayaHitung")
             });
         }
         jTable1.setModel(model);
