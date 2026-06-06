@@ -2,11 +2,14 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.tubespbo;
+package com.mycompany.tubespbo.gui;
 
+import com.mycompany.tubespbo.classs.*;
+import com.mycompany.tubespbo.gui.Utama;
 import java.awt.HeadlessException;
 import java.sql.*;
 import javax.swing.JOptionPane;
+import java.time.LocalDateTime;
 /**
  *
  * @author fathi
@@ -166,34 +169,42 @@ public static Connection configDB() {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         try {
-            String platNomor = jTextField1.getText().trim();
-            String merk = jTextField2.getText().trim();
-            String jenis = jComboBox1.getSelectedItem().toString();
-            int jumlahRoda = jenis.equals("Motor") ? 2 : 4;
+        String platNomor = jTextField1.getText().trim();
+        String merk = jTextField2.getText().trim();
+        String jenis = jComboBox1.getSelectedItem().toString();
 
         if (platNomor.isEmpty() || merk.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Plat Nomor dan Merk tidak boleh kosong!");
             return;
         }
 
+        // OOP: buat object Kendaraan
+        Kendaraan kendaraan;
+        if (jenis.equalsIgnoreCase("Motor")) {
+            kendaraan = new Motor(platNomor, merk);
+        } else {
+            kendaraan = new Mobil(platNomor, merk);
+        }
+
         Connection conn = configDB();
 
         String cekSql = "SELECT * FROM kendaraan WHERE platNomor = ?";
         PreparedStatement cekPst = conn.prepareStatement(cekSql);
-        cekPst.setString(1, platNomor);
+        cekPst.setString(1, kendaraan.getPlatNomor());
         ResultSet cekRs = cekPst.executeQuery();
 
         if (!cekRs.next()) {
             String sqlKendaraan = "INSERT INTO kendaraan (platNomor, merk, jumlahRoda, jenis) VALUES (?, ?, ?, ?)";
             PreparedStatement pstKendaraan = conn.prepareStatement(sqlKendaraan);
-            pstKendaraan.setString(1, platNomor);
-            pstKendaraan.setString(2, merk);
-            pstKendaraan.setInt(3, jumlahRoda);
+            pstKendaraan.setString(1, kendaraan.getPlatNomor());
+            pstKendaraan.setString(2, kendaraan.getMerk());
+            pstKendaraan.setInt(3, kendaraan.getJumlahRoda());
             pstKendaraan.setString(4, jenis);
             pstKendaraan.execute();
         }
 
-        String sqlSlot = "SELECT idSlot FROM slotParkir WHERE status = false AND jenisSlot = ? LIMIT 1";
+        // OOP: buat object SlotParkir
+        String sqlSlot = "SELECT idSlot, status, jenisSlot FROM slotParkir WHERE status = false AND jenisSlot = ? LIMIT 1";
         PreparedStatement pstSlot = conn.prepareStatement(sqlSlot);
         pstSlot.setString(1, jenis);
         ResultSet rsSlot = pstSlot.executeQuery();
@@ -203,27 +214,35 @@ public static Connection configDB() {
             return;
         }
 
-        String idSlot = rsSlot.getString("idSlot");
+        SlotParkir slot = new SlotParkir(
+            rsSlot.getString("idSlot"),
+            rsSlot.getBoolean("status"),
+            rsSlot.getString("jenisSlot")
+        );
+
+        // OOP: buat object Tiket
         String idTiket = "TKT" + System.currentTimeMillis();
+        Tiket tiket = new Tiket(idTiket, kendaraan, slot, java.time.LocalDateTime.now());
 
         String sqlTiket = "INSERT INTO tiket (idTiket, kendaraan, slot, waktuMasuk) VALUES (?, ?, ?, NOW())";
         PreparedStatement pstTiket = conn.prepareStatement(sqlTiket);
-        pstTiket.setString(1, idTiket);
-        pstTiket.setString(2, platNomor);
-        pstTiket.setString(3, idSlot);
+        pstTiket.setString(1, tiket.getIdTiket());
+        pstTiket.setString(2, kendaraan.getPlatNomor());
+        pstTiket.setString(3, slot.getIdSlot());
         pstTiket.execute();
 
+        slot.setStatus(true);
         String sqlUpdateSlot = "UPDATE slotParkir SET status = true WHERE idSlot = ?";
         PreparedStatement pstUpdateSlot = conn.prepareStatement(sqlUpdateSlot);
-        pstUpdateSlot.setString(1, idSlot);
+        pstUpdateSlot.setString(1, slot.getIdSlot());
         pstUpdateSlot.execute();
 
-        JOptionPane.showMessageDialog(this, "Kendaraan masuk!\nSlot: " + idSlot + "\nID Tiket: " + idTiket);
+        JOptionPane.showMessageDialog(this, "Kendaraan masuk!\nSlot: " + slot.getIdSlot() + "\nID Tiket: " + tiket.getIdTiket());
         kosong();
 
-} catch (HeadlessException | SQLException e) {
-    JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-}
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+    }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed

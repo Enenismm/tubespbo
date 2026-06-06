@@ -2,7 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-package com.mycompany.tubespbo;
+package com.mycompany.tubespbo.gui;
+
+import com.mycompany.tubespbo.classs.*;
+import com.mycompany.tubespbo.gui.Utama;
 import java.sql.*;
 import javax.swing.JOptionPane;
 
@@ -66,7 +69,6 @@ public static Connection configDB() {
         jTextField7 = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(500, 578));
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         jLabel1.setText("KENDARAAN KELUAR");
@@ -209,57 +211,68 @@ public static Connection configDB() {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         try {
-    if (jComboBox1.getSelectedItem() == null) {
-    JOptionPane.showMessageDialog(this, "Tidak ada kendaraan!");
-    return;
-}
-    String platNomor = jComboBox1.getSelectedItem().toString();
-    String idSlot = jTextField3.getText();
-    String jenis = jTextField2.getText();
+        if (jComboBox1.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(this, "Tidak ada kendaraan!");
+            return;
+        }
+        String platNomor = jComboBox1.getSelectedItem().toString();
+        String idSlot = jTextField3.getText();
+        String jenis = jTextField2.getText();
+        String merk = jTextField1.getText();
 
-    Connection conn = configDB();
+        Connection conn = configDB();
 
-    // Hitung tarif
-    String sqlMasuk = "SELECT waktuMasuk FROM tiket WHERE kendaraan = ? AND waktuKeluar IS NULL";
-    PreparedStatement pstMasuk = conn.prepareStatement(sqlMasuk);
-    pstMasuk.setString(1, platNomor);
-    ResultSet rsMasuk = pstMasuk.executeQuery();
+        String sqlMasuk = "SELECT waktuMasuk FROM tiket WHERE kendaraan = ? AND waktuKeluar IS NULL";
+        PreparedStatement pstMasuk = conn.prepareStatement(sqlMasuk);
+        pstMasuk.setString(1, platNomor);
+        ResultSet rsMasuk = pstMasuk.executeQuery();
 
-    if (rsMasuk.next()) {
-        java.sql.Timestamp waktuMasuk = rsMasuk.getTimestamp("waktuMasuk");
-        java.sql.Timestamp waktuKeluar = new java.sql.Timestamp(System.currentTimeMillis());
+        if (rsMasuk.next()) {
+            // OOP: buat object Kendaraan
+            Kendaraan kendaraan;
+            if (jenis.equalsIgnoreCase("Motor")) {
+                kendaraan = new Motor(platNomor, merk);
+            } else {
+                kendaraan = new Mobil(platNomor, merk);
+            }
 
-        long diffMs = waktuKeluar.getTime() - waktuMasuk.getTime();
-        long diffJam = diffMs / (1000 * 60 * 60);
-        if (diffJam < 1) diffJam = 1;
+            // OOP: buat object SlotParkir
+            SlotParkir slot = new SlotParkir(idSlot, true, jenis);
 
-        double tarif = jenis.equalsIgnoreCase("Motor") ? 2000 : 4000;
-        double totalBiaya = diffJam * tarif;
+            // OOP: buat object Tiket, pakai hitungDurasi() & hitungBiaya()
+            java.sql.Timestamp tsMasuk = rsMasuk.getTimestamp("waktuMasuk");
+            Tiket tiket = new Tiket("", kendaraan, slot, tsMasuk.toLocalDateTime());
 
-        jTextField5.setText(waktuKeluar.toString());
-        jTextField6.setText(diffJam + " jam");
-        jTextField7.setText("Rp " + totalBiaya);
+            int durasi = tiket.hitungDurasi();
+            double totalBiaya = tiket.hitungBiaya();
 
-        // UPDATE tiket
-        String sqlUpdate = "UPDATE tiket SET waktuKeluar = ?, totalBiaya = ? WHERE kendaraan = ? AND waktuKeluar IS NULL";
-        PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdate);
-        pstUpdate.setTimestamp(1, waktuKeluar);
-        pstUpdate.setDouble(2, totalBiaya);
-        pstUpdate.setString(3, platNomor);
-        pstUpdate.execute();
+            java.sql.Timestamp waktuKeluar = new java.sql.Timestamp(System.currentTimeMillis());
 
-        // UPDATE slotParkir
-        String sqlSlot = "UPDATE slotParkir SET status = false WHERE idSlot = ?";
-        PreparedStatement pstSlot = conn.prepareStatement(sqlSlot);
-        pstSlot.setString(1, idSlot);
-        pstSlot.execute();
+            jTextField5.setText(waktuKeluar.toString());
+            jTextField6.setText(durasi + " jam");
+            jTextField7.setText("Rp " + totalBiaya);
 
-        JOptionPane.showMessageDialog(this, "Kendaraan keluar!\nTotal Biaya: Rp " + totalBiaya);
-        loadPlatNomor();
+            String sqlUpdate = "UPDATE tiket SET waktuKeluar = ?, totalBiaya = ? WHERE kendaraan = ? AND waktuKeluar IS NULL";
+            PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdate);
+            pstUpdate.setTimestamp(1, waktuKeluar);
+            pstUpdate.setDouble(2, totalBiaya);
+            pstUpdate.setString(3, platNomor);
+            pstUpdate.execute();
+
+            slot.setStatus(false);
+            String sqlSlot = "UPDATE slotParkir SET status = false WHERE idSlot = ?";
+            PreparedStatement pstSlot = conn.prepareStatement(sqlSlot);
+            pstSlot.setString(1, slot.getIdSlot());
+            pstSlot.execute();
+
+            tiket.cetakTiket();
+
+            JOptionPane.showMessageDialog(this, "Kendaraan keluar!\nDurasi: " + durasi + " jam\nTotal Biaya: Rp " + totalBiaya);
+            loadPlatNomor();
+        }
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
     }
-} catch (SQLException e) {
-    JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-}
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jTextField5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField5ActionPerformed
