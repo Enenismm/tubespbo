@@ -46,6 +46,18 @@ public class Tiket {
         System.out.println("Total     : Rp " + hitungBiaya());
         System.out.println("==========================");
     }
+    
+     public String getTiketString() {
+        return "====== TIKET PARKIR ======\n" +
+               "ID Tiket  : " + idTiket + "\n" +
+               "Kendaraan : " + kendaraan.getInfo() + "\n" +
+               "Slot      : " + slot.getIdSlot() + "\n" +
+               "Masuk     : " + waktuMasuk + "\n" +
+               "Keluar    : " + (waktuKeluar != null ? waktuKeluar : "-") + "\n" +
+               "Durasi    : " + hitungDurasi() + " jam\n" +
+               "Total     : Rp " + hitungBiaya() + "\n" +
+               "==========================";
+    }
 
     public String getIdTiket() { return idTiket; }
     public Kendaraan getKendaraan() { return kendaraan; }

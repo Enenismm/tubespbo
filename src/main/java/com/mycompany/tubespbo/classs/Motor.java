@@ -16,6 +16,6 @@ public class Motor extends Kendaraan implements Tarif {
 
     @Override
     public String getInfo() {
-        return "Motor | " + platNomor + " | " + merk;
+        return "Motor | " + getPlatNomor() + " | " + getMerk();
     }
 }

@@ -1,9 +1,9 @@
 package com.mycompany.tubespbo.classs;
 
 public abstract class Kendaraan {
-    protected String platNomor;
-    protected String merk;
-    protected int jumlahRoda;
+    private String platNomor;
+    private String merk;
+    private int jumlahRoda;
 
     public Kendaraan(String platNomor, String merk, int jumlahRoda) {
         this.platNomor = platNomor;

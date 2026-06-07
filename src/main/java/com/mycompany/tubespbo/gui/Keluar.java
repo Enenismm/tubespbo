@@ -8,6 +8,8 @@ import com.mycompany.tubespbo.classs.*;
 import com.mycompany.tubespbo.gui.Utama;
 import java.sql.*;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
 
 /**
  *
@@ -220,9 +222,9 @@ public static Connection configDB() {
         String jenis = jTextField2.getText();
         String merk = jTextField1.getText();
 
-        Connection conn = configDB();
+        Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
 
-        String sqlMasuk = "SELECT waktuMasuk FROM tiket WHERE kendaraan = ? AND waktuKeluar IS NULL";
+        String sqlMasuk = "SELECT idTiket, waktuMasuk FROM tiket WHERE kendaraan = ? AND waktuKeluar IS NULL";
         PreparedStatement pstMasuk = conn.prepareStatement(sqlMasuk);
         pstMasuk.setString(1, platNomor);
         ResultSet rsMasuk = pstMasuk.executeQuery();
@@ -241,7 +243,8 @@ public static Connection configDB() {
 
             // OOP: buat object Tiket, pakai hitungDurasi() & hitungBiaya()
             java.sql.Timestamp tsMasuk = rsMasuk.getTimestamp("waktuMasuk");
-            Tiket tiket = new Tiket("", kendaraan, slot, tsMasuk.toLocalDateTime());
+            String idTiket = rsMasuk.getString("idTiket");
+            Tiket tiket = new Tiket(idTiket, kendaraan, slot, tsMasuk.toLocalDateTime());
 
             int durasi = tiket.hitungDurasi();
             double totalBiaya = tiket.hitungBiaya();
@@ -251,6 +254,8 @@ public static Connection configDB() {
             jTextField5.setText(waktuKeluar.toString());
             jTextField6.setText(durasi + " jam");
             jTextField7.setText("Rp " + totalBiaya);
+            
+            tiket.setWaktuKeluar(waktuKeluar.toLocalDateTime());
 
             String sqlUpdate = "UPDATE tiket SET waktuKeluar = ?, totalBiaya = ? WHERE kendaraan = ? AND waktuKeluar IS NULL";
             PreparedStatement pstUpdate = conn.prepareStatement(sqlUpdate);
@@ -265,10 +270,13 @@ public static Connection configDB() {
             pstSlot.setString(1, slot.getIdSlot());
             pstSlot.execute();
 
-            tiket.cetakTiket();
-
-            JOptionPane.showMessageDialog(this, "Kendaraan keluar!\nDurasi: " + durasi + " jam\nTotal Biaya: Rp " + totalBiaya);
-            loadPlatNomor();
+            // SESUDAH — ganti dua baris di atas dengan ini
+            JTextArea textArea = new JTextArea(tiket.getTiketString());
+            textArea.setEditable(false);
+            textArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 13));
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(320, 200));
+            JOptionPane.showMessageDialog(this, scrollPane, "Tiket Parkir", JOptionPane.INFORMATION_MESSAGE);
         }
     } catch (SQLException e) {
         JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
@@ -304,7 +312,7 @@ public static Connection configDB() {
     private void loadDataKendaraan() {
     try {
         String platNomor = jComboBox1.getSelectedItem().toString();
-        Connection conn = configDB();
+        Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
         String sql = "SELECT k.merk, k.jenis, t.slot, t.waktuMasuk FROM tiket t JOIN kendaraan k ON t.kendaraan = k.platNomor WHERE t.kendaraan = ? AND t.waktuKeluar IS NULL";
         PreparedStatement pst = conn.prepareStatement(sql);
         pst.setString(1, platNomor);
@@ -368,7 +376,7 @@ public static Connection configDB() {
 
     private void loadPlatNomor() {
         try {
-            Connection conn = configDB();
+            Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
             String sql = "SELECT k.platNomor FROM tiket t JOIN kendaraan k ON t.kendaraan = k.platNomor WHERE t.waktuKeluar IS NULL";
             java.sql.Statement stm = conn.createStatement();
             ResultSet rs = stm.executeQuery(sql);

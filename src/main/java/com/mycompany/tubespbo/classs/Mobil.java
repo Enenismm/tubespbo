@@ -16,6 +16,6 @@ public class Mobil extends Kendaraan implements Tarif {
 
     @Override
     public String getInfo() {
-        return "Mobil | " + platNomor + " | " + merk;
+        return "Mobil | " + getPlatNomor() + " | " + getMerk();
     }
 }

@@ -171,7 +171,7 @@ public static Connection configDB() {
                 return;
             }
 
-            Connection conn = configDB();
+            Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
 
             String sqlKendaraan = "UPDATE kendaraan SET jenis = ?, jumlahRoda = ? WHERE platNomor = ?";
             PreparedStatement pstKendaraan = conn.prepareStatement(sqlKendaraan);
@@ -230,7 +230,7 @@ public static Connection configDB() {
     int konfirmasi = JOptionPane.showConfirmDialog(this, "Hapus tiket " + idTiket + "?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
     if (konfirmasi == JOptionPane.YES_OPTION) {
         try {
-            Connection conn = configDB();
+            Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
             String sqlSlot = "UPDATE slotParkir SET status = false WHERE idSlot = (SELECT slot FROM tiket WHERE idTiket = ?)";
             PreparedStatement pstSlot = conn.prepareStatement(sqlSlot);
             pstSlot.setString(1, idTiket);
@@ -294,7 +294,7 @@ public static Connection configDB() {
         model.addColumn("Durasi");
         model.addColumn("Total Biaya");
 
-        Connection conn = configDB();
+        Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
         String sql = "SELECT t.idTiket, t.kendaraan, k.jenis, t.waktuMasuk, t.waktuKeluar, "
                    + "GREATEST(1, TIMESTAMPDIFF(HOUR, t.waktuMasuk, IFNULL(t.waktuKeluar, NOW()))) as durasi, "
                    + "t.totalBiaya, "

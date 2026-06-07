@@ -186,7 +186,7 @@ public static Connection configDB() {
             kendaraan = new Mobil(platNomor, merk);
         }
 
-        Connection conn = configDB();
+        Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
 
         String cekSql = "SELECT * FROM kendaraan WHERE platNomor = ?";
         PreparedStatement cekPst = conn.prepareStatement(cekSql);
