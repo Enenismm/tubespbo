@@ -11,8 +11,11 @@ public abstract class Kendaraan {
         this.jumlahRoda = jumlahRoda;
     }
 
-    public String getPlatNomor() { return platNomor; }
-    public String getMerk() { return merk; }
-    public int getJumlahRoda() { return jumlahRoda; }
+    public String getPlatNomor() { 
+        return platNomor; }
+    public String getMerk() { 
+        return merk; }
+    public int getJumlahRoda() { 
+        return jumlahRoda; }
     public abstract String getInfo();
 }

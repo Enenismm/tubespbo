@@ -1,8 +1,5 @@
 package com.mycompany.tubespbo.classs;
 
-import com.mycompany.tubespbo.classs.SlotParkir;
-import com.mycompany.tubespbo.classs.Kendaraan;
-import com.mycompany.tubespbo.classs.Tarif;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -34,18 +31,6 @@ public class Tiket {
         }
         return totalBiaya;
     }
-
-    public void cetakTiket() {
-        System.out.println("====== TIKET PARKIR ======");
-        System.out.println("ID Tiket  : " + idTiket);
-        System.out.println("Kendaraan : " + kendaraan.getInfo());
-        System.out.println("Slot      : " + slot.getIdSlot());
-        System.out.println("Masuk     : " + waktuMasuk);
-        System.out.println("Keluar    : " + (waktuKeluar != null ? waktuKeluar : "-"));
-        System.out.println("Durasi    : " + hitungDurasi() + " jam");
-        System.out.println("Total     : Rp " + hitungBiaya());
-        System.out.println("==========================");
-    }
     
      public String getTiketString() {
         return "====== TIKET PARKIR ======\n" +
@@ -59,12 +44,20 @@ public class Tiket {
                "==========================";
     }
 
-    public String getIdTiket() { return idTiket; }
-    public Kendaraan getKendaraan() { return kendaraan; }
-    public SlotParkir getSlot() { return slot; }
-    public LocalDateTime getWaktuMasuk() { return waktuMasuk; }
-    public LocalDateTime getWaktuKeluar() { return waktuKeluar; }
-    public double getTotalBiaya() { return totalBiaya; }
-    public void setWaktuKeluar(LocalDateTime w) { this.waktuKeluar = w; }
-    public void setTotalBiaya(double t) { this.totalBiaya = t; }
+    public String getIdTiket() { 
+        return idTiket; }
+    public Kendaraan getKendaraan() { 
+        return kendaraan; }
+    public SlotParkir getSlot() { 
+        return slot; }
+    public LocalDateTime getWaktuMasuk() { 
+        return waktuMasuk; }
+    public LocalDateTime getWaktuKeluar() { 
+        return waktuKeluar; }
+    public double getTotalBiaya() { 
+        return totalBiaya; }
+    public void setWaktuKeluar(LocalDateTime w) { 
+        this.waktuKeluar = w; }
+    public void setTotalBiaya(double t) { 
+        this.totalBiaya = t; }
 }

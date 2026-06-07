@@ -187,6 +187,16 @@ public static Connection configDB() {
         }
 
         Connection conn = com.mycompany.tubespbo.TubesPbo.getInstance();
+        
+        // cek apakah plat sudah parkir
+        String cekParkir = "SELECT * FROM tiket WHERE kendaraan = ? AND waktuKeluar IS NULL";
+        PreparedStatement pstCek = conn.prepareStatement(cekParkir);
+        pstCek.setString(1, platNomor);
+        ResultSet rsCek = pstCek.executeQuery();
+        if (rsCek.next()) {
+            JOptionPane.showMessageDialog(this, "Kendaraan ini masih parkir!");
+            return;
+        }
 
         String cekSql = "SELECT * FROM kendaraan WHERE platNomor = ?";
         PreparedStatement cekPst = conn.prepareStatement(cekSql);
@@ -206,7 +216,13 @@ public static Connection configDB() {
         // OOP: buat object SlotParkir
         String sqlSlot = "SELECT idSlot, status, jenisSlot FROM slotParkir WHERE status = false AND jenisSlot = ? LIMIT 1";
         PreparedStatement pstSlot = conn.prepareStatement(sqlSlot);
-        pstSlot.setString(1, jenis);
+        String jenisSlot;
+            if (kendaraan.getJumlahRoda() == 2) {
+                jenisSlot = "Motor";
+            } else {
+                jenisSlot = "Mobil";
+        }
+        pstSlot.setString(1, jenisSlot);
         ResultSet rsSlot = pstSlot.executeQuery();
 
         if (!rsSlot.next()) {
